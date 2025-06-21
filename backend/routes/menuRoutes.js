@@ -1,56 +1,28 @@
 import express from 'express';
-import multer from 'multer';
-import path from 'path';
 import fs from 'fs';
 import { pool } from '../config/db.js';
+import {
+  upload,
+  uploadToBlob,
+  getImageUrl,
+  serveLocalImage,
+  deleteFromBlob,
+} from '../config/storage.js';
 
 const MenuRouter = express.Router();
 
-// Configure multer for image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = 'uploads/menu-items/';
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    // Create unique filename with timestamp
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'menu-item-' + uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    // Check if file is an image
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'), false);
-    }
-  },
-});
-
-// Serve uploaded images
+// Serve uploaded images (only for development)
 MenuRouter.get('/items/images/:filename', (req, res) => {
-  const { filename } = req.params;
-  const imagePath = path.join('uploads/menu-items/', filename);
-
-  if (fs.existsSync(imagePath)) {
-    res.sendFile(path.resolve(imagePath));
-  } else {
-    res.status(404).json({
+  if (process.env.NODE_ENV === 'production') {
+    // In production, images are served directly from Vercel Blob
+    return res.status(404).json({
       success: false,
-      message: 'Image not found',
+      message: 'Images are served from blob storage in production',
     });
   }
+
+  const { filename } = req.params;
+  serveLocalImage(filename, res);
 });
 
 // Get all menu categories
@@ -73,17 +45,20 @@ MenuRouter.get('/categories', async (req, res) => {
   }
 });
 
-// Get menu items by category for Chef Dashboard (including unavailable items)
+// Get menu items by category (including unavailable items for staff/customer viewing)
 MenuRouter.get('/categories/:categoryId/items', async (req, res) => {
   try {
     const { categoryId } = req.params;
-    // Check if this is for chef dashboard
-    const { forChef } = req.query;
+    // Check if this includes unavailable items (for chef dashboard or customer viewing)
+    const { forChef, includeUnavailable } = req.query;
 
     let query = 'SELECT * FROM menu_items WHERE category_id = $1';
 
-    // Only filter for available items if not for chef dashboard
-    if (!forChef || forChef !== 'true') {
+    // Only filter for available items if not for chef dashboard or customer viewing
+    if (
+      (!forChef || forChef !== 'true') &&
+      (!includeUnavailable || includeUnavailable !== 'true')
+    ) {
       query += ' AND is_available = true';
     }
 
@@ -175,29 +150,58 @@ MenuRouter.post(
       );
 
       if (currentItem.rows.length === 0) {
-        // Delete uploaded file if menu item doesn't exist
-        fs.unlinkSync(req.file.path);
         return res.status(404).json({
           success: false,
           message: 'Menu item not found',
         });
       }
 
-      // Delete old image if it exists
-      if (currentItem.rows[0].image_url) {
-        const oldImagePath = currentItem.rows[0].image_url;
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
+      let imageUrl;
+
+      if (process.env.NODE_ENV === 'production') {
+        // Upload to Vercel Blob in production
+        const blobResult = await uploadToBlob(req.file);
+
+        if (!blobResult.success) {
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to upload image to blob storage',
+            error: blobResult.error,
+          });
+        }
+
+        imageUrl = blobResult.url;
+      } else {
+        // Use local file path in development
+        // Normalize path separators to forward slashes for URLs
+        imageUrl = req.file.path.replace(/\\/g, '/');
+      } // Delete old image if it exists
+      const oldImageUrl = currentItem.rows[0].image_url;
+      if (oldImageUrl) {
+        if (process.env.NODE_ENV === 'production') {
+          // Delete from Vercel Blob storage in production
+          if (oldImageUrl.startsWith('http')) {
+            const deleteResult = await deleteFromBlob(oldImageUrl);
+            if (!deleteResult.success) {
+              console.warn(
+                'Failed to delete old image from blob storage:',
+                deleteResult.error
+              );
+              // Continue with upload even if old image deletion fails
+            }
+          }
+        } else {
+          // Delete local file in development
+          if (fs.existsSync(oldImageUrl)) {
+            fs.unlinkSync(oldImageUrl);
+          }
         }
       }
-
-      // Normalize path separators to forward slashes for URLs
-      const normalizedPath = req.file.path.replace(/\\/g, '/');
 
       // Update menu item with new image URL
       const result = await pool.query(
         'UPDATE menu_items SET image_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
-        [normalizedPath, id]
+        [imageUrl, id]
       );
 
       res.json({
@@ -207,9 +211,11 @@ MenuRouter.post(
       });
     } catch (error) {
       console.error('Error uploading menu item image:', error);
-      // Delete uploaded file if there was an error
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
+      // Delete uploaded file if there was an error (only in development)
+      if (req.file && process.env.NODE_ENV !== 'production') {
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
       }
       res.status(500).json({
         success: false,
@@ -326,11 +332,24 @@ MenuRouter.delete('/items/:id/delete-image', async (req, res) => {
         success: false,
         message: 'No image to delete',
       });
-    }
-
-    // Delete image file
-    if (fs.existsSync(imageUrl)) {
-      fs.unlinkSync(imageUrl);
+    } // Delete image file based on environment
+    if (process.env.NODE_ENV === 'production') {
+      // Delete from Vercel Blob storage in production
+      if (imageUrl.startsWith('http')) {
+        const deleteResult = await deleteFromBlob(imageUrl);
+        if (!deleteResult.success) {
+          console.warn(
+            'Failed to delete image from blob storage:',
+            deleteResult.error
+          );
+          // Continue with database update even if blob deletion fails
+        }
+      }
+    } else {
+      // Delete local file in development
+      if (fs.existsSync(imageUrl)) {
+        fs.unlinkSync(imageUrl);
+      }
     }
 
     // Update menu item to remove image URL

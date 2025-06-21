@@ -132,13 +132,11 @@ const MenuPage = () => {
           toast.info('Continue ordering for your session', {
             description: `${serviceType} service at Table ${tableNumber}`,
           });
-        }
-
-        // Mark that we've restored the session to prevent infinite loop
+        } // Mark that we've restored the session to prevent infinite loop
         sessionRestored.current = true;
       }
     }
-  }, [location.state]);
+  }, [location.state, updateSession]);
 
   // Update unli-wings flag whenever session changes
   useEffect(() => {
@@ -166,9 +164,12 @@ const MenuPage = () => {
         // Load menu items for each category
         const itemsMap: Record<number, MenuItem[]> = {};
         const categoriesToShow: MenuCategory[] = [];
-
         for (const category of categoriesResponse.data) {
-          const itemsResponse = await getMenuItemsByCategory(category.id);
+          const itemsResponse = await getMenuItemsByCategory(
+            category.id,
+            false,
+            true
+          ); // Include unavailable items for customer viewing
           if (itemsResponse.success) {
             // Filter out unli-eligible items for all service types
             // as these will be handled separately in the Unliwings section
@@ -176,7 +177,7 @@ const MenuPage = () => {
               (item) => !item.is_unli_eligible
             );
 
-            // Only include categories that have items after filtering
+            // Include categories that have items after filtering (both available and unavailable)
             if (filteredItems.length > 0) {
               itemsMap[category.id] = filteredItems;
               categoriesToShow.push(category);
@@ -191,10 +192,8 @@ const MenuPage = () => {
         }
 
         setMenuItems(itemsMap);
-      }
-
-      // Load wing flavors
-      const flavorsResponse = await getWingFlavors();
+      } // Load wing flavors (include unavailable ones for customer viewing)
+      const flavorsResponse = await getWingFlavors(true); // Use forChef=true to include unavailable flavors
       if (flavorsResponse.success) {
         setFlavors(flavorsResponse.data);
       }
@@ -346,15 +345,21 @@ const MenuPage = () => {
                 <p className="text-sm text-amber-700 mb-4">
                   Select any flavor for your unlimited wings. You can order as
                   many servings as you want!
-                </p>
-
+                </p>{' '}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {flavors.map((flavor) => (
                     <Button
                       key={flavor.id}
                       variant="outline"
-                      className="h-auto py-3 px-3 bg-white border-amber-200 text-amber-800 hover:bg-amber-100 hover:text-amber-900"
+                      className={`h-auto py-3 px-3 border-amber-200 ${
+                        flavor.is_available
+                          ? 'bg-white text-amber-800 hover:bg-amber-100 hover:text-amber-900'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                      }`}
+                      disabled={!flavor.is_available}
                       onClick={() => {
+                        if (!flavor.is_available) return;
+
                         // For Unliwings, we'll create a special cart item
                         // that represents an unlimited wings order with the selected flavor
                         const unliWingsItem: MenuItem = {
@@ -375,8 +380,18 @@ const MenuPage = () => {
                     >
                       <div className="flex flex-col items-center w-full">
                         <span className="font-medium">{flavor.name}</span>
-                        <div className="text-xs text-amber-600 mt-1">
-                          <Plus className="h-4 w-4" />
+                        <div
+                          className={`text-xs mt-1 ${
+                            flavor.is_available
+                              ? 'text-amber-600'
+                              : 'text-gray-400'
+                          }`}
+                        >
+                          {flavor.is_available ? (
+                            <Plus className="h-4 w-4" />
+                          ) : (
+                            <span className="text-xs">Unavailable</span>
+                          )}
                         </div>
                       </div>
                     </Button>
@@ -407,13 +422,25 @@ const MenuPage = () => {
 
           {categories.map((category) => (
             <TabsContent key={category.id} value={category.id.toString()}>
+              {' '}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {menuItems[category.id]?.map((item) => (
-                  <Card key={item.id} className="overflow-hidden">
+                  <Card
+                    key={item.id}
+                    className={`overflow-hidden transition-all ${
+                      !item.is_available
+                        ? 'opacity-60 bg-gray-50 border-gray-200'
+                        : 'hover:shadow-md'
+                    }`}
+                  >
                     <CardHeader className="py-3 border-b">
                       <div className="flex items-start space-x-3">
                         {/* Small Menu Item Image - positioned on the left */}
-                        <div className="flex-shrink-0">
+                        <div
+                          className={`flex-shrink-0 ${
+                            !item.is_available ? 'grayscale' : ''
+                          }`}
+                        >
                           <MenuItemImage item={item} />
                         </div>
 
@@ -421,16 +448,42 @@ const MenuPage = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
-                              <CardTitle className="text-md font-semibold leading-tight">
-                                {item.name}
-                              </CardTitle>
+                              <div className="flex items-center gap-2 mb-1">
+                                <CardTitle
+                                  className={`text-md font-semibold leading-tight ${
+                                    !item.is_available ? 'text-gray-500' : ''
+                                  }`}
+                                >
+                                  {item.name}
+                                </CardTitle>
+                                {!item.is_available && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs bg-gray-200 text-gray-600"
+                                  >
+                                    Unavailable
+                                  </Badge>
+                                )}
+                              </div>
                               {item.description && (
-                                <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                <p
+                                  className={`text-xs mt-1 line-clamp-2 ${
+                                    !item.is_available
+                                      ? 'text-gray-400'
+                                      : 'text-gray-500'
+                                  }`}
+                                >
                                   {item.description}
                                 </p>
                               )}
                             </div>
-                            <div className="text-amber-600 font-bold flex-shrink-0 ml-2">
+                            <div
+                              className={`font-bold flex-shrink-0 ml-2 ${
+                                !item.is_available
+                                  ? 'text-gray-400'
+                                  : 'text-amber-600'
+                              }`}
+                            >
                               ₱
                               {item.price !== undefined && item.price !== null
                                 ? Number(item.price).toFixed(2)
@@ -439,12 +492,18 @@ const MenuPage = () => {
                           </div>
                         </div>
                       </div>
-                    </CardHeader>
-
+                    </CardHeader>{' '}
                     <CardContent className="p-3">
                       <Button
-                        className="w-full bg-amber-500 hover:bg-amber-600"
+                        className={`w-full ${
+                          item.is_available
+                            ? 'bg-amber-500 hover:bg-amber-600'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                        disabled={!item.is_available}
                         onClick={() => {
+                          if (!item.is_available) return;
+
                           // For wing items we need to handle flavor selection
                           if (item.is_wing_item && !item.is_unli_eligible) {
                             // Open flavor selection dialog for wing items
@@ -454,7 +513,9 @@ const MenuPage = () => {
                           }
                         }}
                       >
-                        Add to Order
+                        {item.is_available
+                          ? 'Add to Order'
+                          : 'Currently Unavailable'}
                       </Button>
                     </CardContent>
                   </Card>

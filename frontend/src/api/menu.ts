@@ -57,12 +57,18 @@ export const getMenuCategories = async (): Promise<
 // Get menu items by category
 export const getMenuItemsByCategory = async (
   categoryId: number,
-  forChef: boolean = false
+  forChef: boolean = false,
+  includeUnavailable: boolean = false
 ): Promise<ApiResponse<MenuItem[]>> => {
   try {
+    const params = new URLSearchParams();
+    if (forChef) params.append('forChef', 'true');
+    if (includeUnavailable) params.append('includeUnavailable', 'true');
+
+    const queryString = params.toString();
     const response = await axios.get(
       `${BASE_URL}/menu/categories/${categoryId}/items${
-        forChef ? '?forChef=true' : ''
+        queryString ? `?${queryString}` : ''
       }`
     );
     return response.data;
@@ -180,6 +186,12 @@ export const deleteMenuItemImage = async (
 export const getMenuItemImageUrl = (imageUrl: string): string => {
   if (!imageUrl) return '';
 
+  // If it's already a full URL (blob storage URL), return as is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+
+  // For local development paths, construct the API URL
   // Normalize path separators to forward slashes
   const normalizedPath = imageUrl.replace(/\\/g, '/');
 

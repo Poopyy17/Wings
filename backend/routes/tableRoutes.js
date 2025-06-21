@@ -10,14 +10,27 @@ tableRouter.get('/', async (req, res) => {
       'SELECT id, table_number, status, qr_code_path FROM tables ORDER BY table_number'
     );
 
-    // Add full URL to QR code path
+    // Handle QR code URLs based on environment
     const tables = result.rows.map((table) => {
       if (table.qr_code_path) {
+        let qr_code_url;
+
+        // If it's already a full URL (blob storage), use as is
+        if (
+          table.qr_code_path.startsWith('http://') ||
+          table.qr_code_path.startsWith('https://')
+        ) {
+          qr_code_url = table.qr_code_path;
+        } else {
+          // For local development paths, construct the full URL
+          qr_code_url = `${req.protocol}://${req.get('host')}${
+            table.qr_code_path
+          }`;
+        }
+
         return {
           ...table,
-          qr_code_url: `${req.protocol}://${req.get('host')}${
-            table.qr_code_path
-          }`,
+          qr_code_url,
         };
       }
       return table;
@@ -42,11 +55,20 @@ tableRouter.get('/:id', async (req, res) => {
 
     const table = result.rows[0];
 
-    // Add full URL to QR code path
+    // Handle QR code URL based on environment
     if (table.qr_code_path) {
-      table.qr_code_url = `${req.protocol}://${req.get('host')}${
-        table.qr_code_path
-      }`;
+      // If it's already a full URL (blob storage), use as is
+      if (
+        table.qr_code_path.startsWith('http://') ||
+        table.qr_code_path.startsWith('https://')
+      ) {
+        table.qr_code_url = table.qr_code_path;
+      } else {
+        // For local development paths, construct the full URL
+        table.qr_code_url = `${req.protocol}://${req.get('host')}${
+          table.qr_code_path
+        }`;
+      }
     }
 
     res.json(table);
@@ -70,14 +92,22 @@ tableRouter.put('/:id', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Table not found' });
     }
-
     const table = result.rows[0];
 
-    // Add full URL to QR code path
+    // Handle QR code URL based on environment
     if (table.qr_code_path) {
-      table.qr_code_url = `${req.protocol}://${req.get('host')}${
-        table.qr_code_path
-      }`;
+      // If it's already a full URL (blob storage), use as is
+      if (
+        table.qr_code_path.startsWith('http://') ||
+        table.qr_code_path.startsWith('https://')
+      ) {
+        table.qr_code_url = table.qr_code_path;
+      } else {
+        // For local development paths, construct the full URL
+        table.qr_code_url = `${req.protocol}://${req.get('host')}${
+          table.qr_code_path
+        }`;
+      }
     }
 
     res.json(table);

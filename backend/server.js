@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { pool } from './config/db.js';
+import { pool, testConnection } from './config/db.js';
 import { createTables } from './config/createTable.js';
 import { seedData } from './config/seedData.js';
 import { generateQRCodesForTables } from './config/qrcodeGen.js';
@@ -50,12 +50,15 @@ const PORT = process.env.PORT || 5000;
 
 // Start server
 app.listen(PORT, async () => {
-  console.log(`Server is running on port ${PORT}`);
-
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
   try {
     // Test database connection and create tables
-    await pool.connect();
-    console.log('Successfully connected to database');
+    const connectionSuccess = await testConnection();
+    if (!connectionSuccess) {
+      throw new Error('Database connection failed');
+    }
+
     await createTables();
     await seedData();
 
@@ -63,7 +66,7 @@ app.listen(PORT, async () => {
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     await generateQRCodesForTables(baseUrl);
 
-    console.log('Database initialization and QR code generation complete');
+    console.log('🎯 Database initialization and QR code generation complete');
   } catch (err) {
     console.error('Error during startup:', err.stack);
   }

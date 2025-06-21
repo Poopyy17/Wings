@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -51,8 +50,13 @@ const WingFlavorSelection = ({
       }
     }
   }, [itemName]);
-
   const handleToggleFlavor = (flavorName: string) => {
+    // Find the flavor to check if it's available
+    const flavor = availableFlavors.find((f) => f.name === flavorName);
+    if (!flavor || !flavor.is_available) {
+      return; // Don't allow selection of unavailable flavors
+    }
+
     if (selectedFlavors.includes(flavorName)) {
       // Remove flavor if already selected
       setSelectedFlavors(selectedFlavors.filter((f) => f !== flavorName));
@@ -94,8 +98,7 @@ const WingFlavorSelection = ({
               {maxFlavors === 1 ? 'a flavor' : `up to ${maxFlavors} flavors`}{' '}
               for your {itemName}
             </AlertDescription>
-          </Alert>
-
+          </Alert>{' '}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto p-2">
             {availableFlavors.map((flavor) => (
               <div
@@ -104,27 +107,34 @@ const WingFlavorSelection = ({
                   selectedFlavors.includes(flavor.name)
                     ? 'border-amber-500 bg-amber-50'
                     : 'border-gray-200'
-                }`}
+                } ${!flavor.is_available ? 'opacity-60 bg-gray-50' : ''}`}
               >
                 <Checkbox
                   id={`flavor-${flavor.id}`}
                   checked={selectedFlavors.includes(flavor.name)}
                   onCheckedChange={() => handleToggleFlavor(flavor.name)}
                   disabled={
-                    !selectedFlavors.includes(flavor.name) &&
-                    selectedFlavors.length >= maxFlavors
+                    !flavor.is_available ||
+                    (!selectedFlavors.includes(flavor.name) &&
+                      selectedFlavors.length >= maxFlavors)
                   }
                 />
                 <Label
                   htmlFor={`flavor-${flavor.id}`}
-                  className="flex-1 cursor-pointer"
+                  className={`flex-1 cursor-pointer ${
+                    !flavor.is_available ? 'text-gray-400 line-through' : ''
+                  }`}
                 >
                   {flavor.name}
+                  {!flavor.is_available && (
+                    <span className="text-xs text-gray-400 ml-2">
+                      (Unavailable)
+                    </span>
+                  )}
                 </Label>
               </div>
             ))}
           </div>
-
           <div className="text-sm text-gray-600 mt-4 text-center">
             {selectedFlavors.length} of {maxFlavors} flavors selected
           </div>
