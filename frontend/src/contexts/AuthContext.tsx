@@ -71,23 +71,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.removeEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
       window.removeEventListener('storage', handleAuthChange);
     };
-  }, []);
-
-  const login = async (userData: AuthUser, userRole: string): Promise<void> => {
+  }, []);  const login = async (userData: AuthUser, userRole: string): Promise<void> => {
+    console.log('AuthContext - Starting login process');
     return new Promise((resolve) => {
+      // Update state immediately
       setUser(userData);
       setRole(userRole);
       setIsAuthenticated(true);
+      
+      console.log('AuthContext - State updated, user:', userData, 'role:', userRole);
+      
+      // Update localStorage
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('role', userRole);
+      
+      console.log('AuthContext - localStorage updated');
       
       // Dispatch custom event to notify other components
       window.dispatchEvent(new CustomEvent(AUTH_CHANGE_EVENT));
       
-      // Small delay to ensure state is fully updated
+      console.log('AuthContext - Custom event dispatched');
+      
+      // Force a re-render by using a longer delay to ensure all components update
       setTimeout(() => {
+        console.log('AuthContext - Login process completed');
         resolve();
-      }, 10);
+      }, 200);
     });
   };
 

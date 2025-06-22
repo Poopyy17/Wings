@@ -60,32 +60,8 @@ const StaffLogin = () => {
           description: `Welcome to the ${activeRole} dashboard`,
         });
 
-        // Use React Router navigation with replace and force refresh if needed
-        const targetPath = (() => {
-          switch (activeRole) {
-            case 'admin':
-              return '/staff/admin';
-            case 'cashier':
-              return '/staff/cashier';
-            case 'chef':
-              return '/staff/chef';
-            default:
-              return '/staff/cashier';
-          }
-        })();
-
-        console.log('Navigating to:', targetPath);
-        
-        // Navigate using React Router
-        navigate(targetPath, { replace: true });
-        
-        // Fallback: if navigation doesn't work within 1 second, force page reload
-        setTimeout(() => {
-          if (window.location.pathname !== targetPath) {
-            console.log('Navigation failed, forcing page reload to:', targetPath);
-            window.location.href = targetPath;
-          }
-        }, 1000);
+        // The AuthProtection component will handle the redirect automatically
+        console.log('Login process complete, AuthProtection will handle redirect');
         
       } else {
         setError(response.message || 'Login failed');
