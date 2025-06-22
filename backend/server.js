@@ -10,7 +10,7 @@ import { generateQRCodesForTables } from './config/qrcodeGen.js';
 
 // Import routes
 import tableRouter from './routes/tableRoutes.js';
-import AuthRouter from './routes/AuthRoutes.js';
+import AuthRouter from './routes/authRoutes.js';
 import MenuRouter from './routes/menuRoutes.js';
 import orderRouter from './routes/orderRoutes.js';
 import sessionRouter from './routes/sessionRoutes.js';
