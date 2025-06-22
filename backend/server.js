@@ -31,6 +31,7 @@ app.use(
       'http://localhost:3000',
       'http://localhost:5173',
       'https://wings-backend.vercel.app',
+      'https://wingsexpress.shop',
       'https://wings-wine.vercel.app',
       'https://wings-irjdpus4o-poopyy17s-projects.vercel.app',
     ],
