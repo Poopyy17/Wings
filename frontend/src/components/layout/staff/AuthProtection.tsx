@@ -14,12 +14,18 @@ const AuthProtection: React.FC<AuthProtectionProps> = ({
   isLoginPage = false,
 }) => {  const [isLoading, setIsLoading] = useState(true);
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, role: userRole, logout, isLoading: authLoading } = useAuth();
-  useEffect(() => {
+  const { isAuthenticated, role: userRole, logout, isLoading: authLoading } = useAuth();  useEffect(() => {
+    // Debug logging
+    console.log('AuthProtection - Current path:', window.location.pathname);
+    console.log('AuthProtection - isLoginPage:', isLoginPage);
+    console.log('AuthProtection - isAuthenticated:', isAuthenticated);
+    console.log('AuthProtection - userRole:', userRole);
+    
     // Check if logout parameter is present
     const isLogout = searchParams.get('logout') === 'true';
 
     if (isLogout) {
+      console.log('AuthProtection - Logging out user');
       // Clear authentication data using context
       logout();
     }
@@ -28,7 +34,7 @@ const AuthProtection: React.FC<AuthProtectionProps> = ({
     if (!authLoading) {
       setIsLoading(false);
     }
-  }, [searchParams, logout, authLoading]);
+  }, [searchParams, logout, authLoading, isAuthenticated, userRole, isLoginPage]);
 
   // Show loading if either auth context or local state is loading
   if (authLoading || isLoading) {

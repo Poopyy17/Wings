@@ -49,17 +49,18 @@ const StaffLogin = () => {
         trimmedUsername,
         trimmedPassword,
         activeRole
-      );
-
-      if (response.success) {
+      );      if (response.success) {        console.log('Login successful, response:', response);
+        
         // Use the auth context to set user data (now async)
         await login(response.user, activeRole);
+        
+        console.log('Auth context updated, isAuthenticated should be true');
 
         toast.success(`Logged in as ${username}`, {
           description: `Welcome to the ${activeRole} dashboard`,
         });
 
-        // Force navigation with window.location for more reliable redirection
+        // Use React Router navigation with replace and force refresh if needed
         const targetPath = (() => {
           switch (activeRole) {
             case 'admin':
@@ -73,8 +74,18 @@ const StaffLogin = () => {
           }
         })();
 
-        // Use window.location.replace for immediate and reliable navigation
-        window.location.replace(targetPath);
+        console.log('Navigating to:', targetPath);
+        
+        // Navigate using React Router
+        navigate(targetPath, { replace: true });
+        
+        // Fallback: if navigation doesn't work within 1 second, force page reload
+        setTimeout(() => {
+          if (window.location.pathname !== targetPath) {
+            console.log('Navigation failed, forcing page reload to:', targetPath);
+            window.location.href = targetPath;
+          }
+        }, 1000);
         
       } else {
         setError(response.message || 'Login failed');
