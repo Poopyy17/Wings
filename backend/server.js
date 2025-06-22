@@ -32,6 +32,7 @@ app.use(
       'http://localhost:5173',
       'https://wings-backend.vercel.app',
       'https://wings-wine.vercel.app',
+      'https://wings-irjdpus4o-poopyy17s-projects.vercel.app',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
