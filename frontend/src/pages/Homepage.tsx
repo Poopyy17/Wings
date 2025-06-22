@@ -46,7 +46,8 @@ const Homepage = () => {
   }, [isTableSelectionOpen]);
   const loadTables = async () => {
     setTablesLoading(true);
-    setTablesError(null);    try {
+    setTablesError(null);
+    try {
       const response = await getAllTables();
       // getAllTables returns Table[] directly
       setTables(response);

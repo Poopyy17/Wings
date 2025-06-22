@@ -18,7 +18,8 @@ export const useAnalyticsPDFExport = () => {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToPDF = async (data: ExportData) => {
-    setIsExporting(true);    try {
+    setIsExporting(true);
+    try {
       // Create the PDF document
       const doc = React.createElement(AnalyticsReport, {
         ...data,

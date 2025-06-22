@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthProtectionProps {
   children: React.ReactNode;
@@ -13,40 +14,25 @@ const AuthProtection: React.FC<AuthProtectionProps> = ({
   isLoginPage = false,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
+  const { isAuthenticated, role: userRole, logout } = useAuth();
 
   useEffect(() => {
-    const checkAuth = () => {
-      // Check if logout parameter is present
-      const isLogout = searchParams.get('logout') === 'true';
+    // Check if logout parameter is present
+    const isLogout = searchParams.get('logout') === 'true';
 
-      if (isLogout) {
-        // Clear authentication data
-        localStorage.removeItem('user');
-        localStorage.removeItem('role');
-        setIsAuthenticated(false);
-        setUserRole(null);
-        setIsLoading(false);
-        return;
-      }
-
-      const storedUser = localStorage.getItem('user');
-      const storedRole = localStorage.getItem('role');
-
-      if (storedUser && storedRole) {
-        setIsAuthenticated(true);
-        setUserRole(storedRole);
-      } else {
-        setIsAuthenticated(false);
-        setUserRole(null);
-      }
+    if (isLogout) {
+      // Clear authentication data using context
+      logout();
+    }
+    
+    // Small delay to ensure auth context is properly initialized
+    const timer = setTimeout(() => {
       setIsLoading(false);
-    };
+    }, 100);
 
-    checkAuth();
-  }, [searchParams]);
+    return () => clearTimeout(timer);
+  }, [searchParams, logout]);
 
   if (isLoading) {
     return (
@@ -85,8 +71,7 @@ const AuthProtection: React.FC<AuthProtectionProps> = ({
 
   // If this is a protected page with role requirement, check role match
   if (!isLoginPage && allowedRole && userRole !== allowedRole) {
-    return <Navigate to="/staff/login" replace />;
-  }
+    return <Navigate to="/staff/login" replace />;  }
 
   return <>{children}</>;
 };

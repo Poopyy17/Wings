@@ -3,11 +3,13 @@
 ## Environment Variables
 
 ### Development (.env)
+
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
 ### Production (.env.production)
+
 ```env
 VITE_API_BASE_URL=https://your-backend-domain.vercel.app/api
 ```
@@ -15,16 +17,19 @@ VITE_API_BASE_URL=https://your-backend-domain.vercel.app/api
 ## Deployment
 
 This frontend is built with Vite and can be deployed on:
+
 - Netlify (recommended for SPAs)
 - Vercel
 - Any static hosting service
 
 ### For Netlify:
+
 1. Build command: `npm run build`
 2. Publish directory: `dist`
 3. Set environment variables in Netlify dashboard
 
 ### For Vercel:
+
 1. Build command: `npm run build`
 2. Output directory: `dist`
 3. Set environment variables in Vercel dashboard
@@ -65,15 +70,15 @@ export default tseslint.config({
       tsconfigRootDir: import.meta.dirname,
     },
   },
-})
+});
 ```
 
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js
 // eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+import reactX from 'eslint-plugin-react-x';
+import reactDom from 'eslint-plugin-react-dom';
 
 export default tseslint.config({
   plugins: {
@@ -87,5 +92,5 @@ export default tseslint.config({
     ...reactX.configs['recommended-typescript'].rules,
     ...reactDom.configs.recommended.rules,
   },
-})
+});
 ```

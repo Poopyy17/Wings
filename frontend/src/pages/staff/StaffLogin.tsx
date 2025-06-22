@@ -19,9 +19,13 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { loginUser } from '@/api/auth';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLoginRedirect } from '@/hooks/useLoginRedirect';
 
 const StaffLogin = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  useLoginRedirect(); // Use the login redirect hook
   const [activeRole, setActiveRole] = useState('cashier');
   const [username, setUsername] = useState('cashier');
   const [password, setPassword] = useState('');
@@ -31,8 +35,7 @@ const StaffLogin = () => {
   // Auto-fill username when role changes
   useEffect(() => {
     setUsername(activeRole);
-  }, [activeRole]);
-  const handleLogin = async (e: React.FormEvent) => {
+  }, [activeRole]);  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -49,41 +52,29 @@ const StaffLogin = () => {
       );
 
       if (response.success) {
-        // Save user info to localStorage for persistence
-        localStorage.setItem('user', JSON.stringify(response.user));
-        localStorage.setItem('role', activeRole);
+        // Use the auth context to set user data (now async)
+        await login(response.user, activeRole);
 
         toast.success(`Logged in as ${username}`, {
           description: `Welcome to the ${activeRole} dashboard`,
         });
 
-        // Add a small delay before navigation to ensure state is updated
-        setTimeout(() => {
-          // Redirect based on role
-          switch (activeRole) {
-            case 'admin':
-              navigate('/staff/admin');
-              break;
-            case 'cashier':
-              navigate('/staff/cashier');
-              break;
-            case 'chef':
-              navigate('/staff/chef');
-              break;
-            default:
-              navigate('/staff/cashier');
-          }
-        }, 200); // Small delay to ensure localStorage is updated
+        // The useLoginRedirect hook will handle navigation automatically
+        
       } else {
         setError(response.message || 'Login failed');
         toast.error('Login failed', {
           description: response.message,
         });
-      }    } catch (err: any) {
+      }
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err.message || 'Invalid credentials');
+      const errorMessage = err && typeof err === 'object' && 'message' in err 
+        ? (err as { message: string }).message 
+        : 'Invalid credentials';
+      setError(errorMessage);
       toast.error('Login failed', {
-        description: err.message || 'Invalid credentials',
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
