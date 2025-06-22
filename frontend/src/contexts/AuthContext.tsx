@@ -10,6 +10,7 @@ interface AuthContextType {
   user: AuthUser | null;
   role: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (user: AuthUser, role: string) => Promise<void>;
   logout: () => void;
 }
@@ -23,27 +24,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Check localStorage on mount
   useEffect(() => {
     const checkAuthFromStorage = () => {
-      const storedUser = localStorage.getItem('user');
-      const storedRole = localStorage.getItem('role');
+      try {
+        const storedUser = localStorage.getItem('user');
+        const storedRole = localStorage.getItem('role');
 
-      if (storedUser && storedRole) {
-        try {
+        if (storedUser && storedRole) {
           const parsedUser = JSON.parse(storedUser);
           setUser(parsedUser);
           setRole(storedRole);
           setIsAuthenticated(true);
-        } catch (error) {
-          console.error('Error parsing stored user:', error);
-          logout();
+        } else {
+          setUser(null);
+          setRole(null);
+          setIsAuthenticated(false);
         }
-      } else {
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        // Clear corrupted data
+        localStorage.removeItem('user');
+        localStorage.removeItem('role');
         setUser(null);
         setRole(null);
         setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -92,12 +101,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Dispatch custom event to notify other components
     window.dispatchEvent(new CustomEvent(AUTH_CHANGE_EVENT));
   };
-
   return (
     <AuthContext.Provider value={{
       user,
       role,
       isAuthenticated,
+      isLoading,
       login,
       logout
     }}>

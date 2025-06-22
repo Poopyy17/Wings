@@ -13,6 +13,7 @@ import ChefDashboard from './pages/staff/Chef/ChefDashboard';
 import AdminDashboard from './pages/staff/Admin/AdminDashboard';
 import AuthProtection from './components/layout/staff/AuthProtection';
 import ThankYou from './pages/customer/Thank-You';
+import NotFound from './pages/NotFound';
 
 const App = () => {
   return (
@@ -62,6 +63,9 @@ const App = () => {
             </AuthProtection>
           }
         />
+
+        {/* Catch-all route for 404 pages */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

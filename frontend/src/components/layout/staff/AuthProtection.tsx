@@ -12,11 +12,9 @@ const AuthProtection: React.FC<AuthProtectionProps> = ({
   children,
   allowedRole,
   isLoginPage = false,
-}) => {
-  const [isLoading, setIsLoading] = useState(true);
+}) => {  const [isLoading, setIsLoading] = useState(true);
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, role: userRole, logout } = useAuth();
-
+  const { isAuthenticated, role: userRole, logout, isLoading: authLoading } = useAuth();
   useEffect(() => {
     // Check if logout parameter is present
     const isLogout = searchParams.get('logout') === 'true';
@@ -26,15 +24,14 @@ const AuthProtection: React.FC<AuthProtectionProps> = ({
       logout();
     }
     
-    // Small delay to ensure auth context is properly initialized
-    const timer = setTimeout(() => {
+    // Wait for auth context to finish loading
+    if (!authLoading) {
       setIsLoading(false);
-    }, 100);
+    }
+  }, [searchParams, logout, authLoading]);
 
-    return () => clearTimeout(timer);
-  }, [searchParams, logout]);
-
-  if (isLoading) {
+  // Show loading if either auth context or local state is loading
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -68,10 +65,10 @@ const AuthProtection: React.FC<AuthProtectionProps> = ({
   if (!isLoginPage && !isAuthenticated) {
     return <Navigate to="/staff/login" replace />;
   }
-
   // If this is a protected page with role requirement, check role match
   if (!isLoginPage && allowedRole && userRole !== allowedRole) {
-    return <Navigate to="/staff/login" replace />;  }
+    return <Navigate to="/staff/login" replace />;
+  }
 
   return <>{children}</>;
 };

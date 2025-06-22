@@ -6,17 +6,20 @@ import { BrowserRouter } from 'react-router-dom';
 import { CartProvider } from './Cart-Context.tsx';
 import { SessionProvider } from './Session-Context.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
+import ErrorBoundary from './components/ErrorBoundary.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <SessionProvider>
-          <CartProvider>
-            <App />
-          </CartProvider>
-        </SessionProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <SessionProvider>
+            <CartProvider>
+              <App />
+            </CartProvider>
+          </SessionProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>
 );

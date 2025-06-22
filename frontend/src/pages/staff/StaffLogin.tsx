@@ -59,7 +59,22 @@ const StaffLogin = () => {
           description: `Welcome to the ${activeRole} dashboard`,
         });
 
-        // The useLoginRedirect hook will handle navigation automatically
+        // Force navigation with window.location for more reliable redirection
+        const targetPath = (() => {
+          switch (activeRole) {
+            case 'admin':
+              return '/staff/admin';
+            case 'cashier':
+              return '/staff/cashier';
+            case 'chef':
+              return '/staff/chef';
+            default:
+              return '/staff/cashier';
+          }
+        })();
+
+        // Use window.location.replace for immediate and reliable navigation
+        window.location.replace(targetPath);
         
       } else {
         setError(response.message || 'Login failed');
