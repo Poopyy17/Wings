@@ -102,12 +102,11 @@ const TakeOutOrdersTab: React.FC = () => {
           setOrders(orders.filter((order) => order.id !== orderId));
           toast.success(
             'Take-out order completed and moved to completed orders tab'
-          );
-        } else {
+          );        } else {
           // Update local state for other status changes
           setOrders(
             orders.map((order) =>
-              order.id === orderId ? { ...order, status: newStatus } : order
+              order.id === orderId ? { ...order, status: newStatus as any } : order
             )
           );
           toast.success(`Take-out order status updated to ${newStatus}`);

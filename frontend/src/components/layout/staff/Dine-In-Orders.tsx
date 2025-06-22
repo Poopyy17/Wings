@@ -116,12 +116,11 @@ const DineInOrdersTab: React.FC = () => {
         if (newStatus === 'Completed') {
           // Remove the order from the list when marked as completed
           setOrders(orders.filter((order) => order.id !== ticketId));
-          toast.success('Order completed and moved to completed orders tab');
-        } else {
+          toast.success('Order completed and moved to completed orders tab');        } else {
           // Update local state for other status changes
           setOrders(
             orders.map((order) =>
-              order.id === ticketId ? { ...order, status: newStatus } : order
+              order.id === ticketId ? { ...order, status: newStatus as any } : order
             )
           );
           toast.success(`Order status updated to ${newStatus}`);

@@ -32,8 +32,7 @@ const StaffLogin = () => {
   useEffect(() => {
     setUsername(activeRole);
   }, [activeRole]);
-
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -80,8 +79,7 @@ const StaffLogin = () => {
         toast.error('Login failed', {
           description: response.message,
         });
-      }
-    } catch (err) {
+      }    } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Invalid credentials');
       toast.error('Login failed', {

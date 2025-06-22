@@ -1,10 +1,10 @@
 import axios from 'axios';
 
 // Base URL for API calls
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 // Login function
-export const loginUser = async (username, password, role) => {
+export const loginUser = async (username: string, password: string, role: string) => {
   try {
     const response = await axios.post(`${BASE_URL}/auth/login`, {
       username,
@@ -12,7 +12,7 @@ export const loginUser = async (username, password, role) => {
       role,
     });
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     if (error.response) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx

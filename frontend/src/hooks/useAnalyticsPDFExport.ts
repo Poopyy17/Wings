@@ -18,9 +18,7 @@ export const useAnalyticsPDFExport = () => {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToPDF = async (data: ExportData) => {
-    setIsExporting(true);
-
-    try {
+    setIsExporting(true);    try {
       // Create the PDF document
       const doc = React.createElement(AnalyticsReport, {
         ...data,
@@ -28,7 +26,7 @@ export const useAnalyticsPDFExport = () => {
       });
 
       // Generate the PDF blob
-      const blob = await pdf(doc).toBlob();
+      const blob = await pdf(doc as any).toBlob();
 
       // Create download link
       const url = URL.createObjectURL(blob);

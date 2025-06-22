@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "cross-env nodemon server.js"
+    "dev": "cross-env nodemon server.js",
+    "start": "node server.js",
+    "build": "echo 'No build step required for Node.js backend'"
   },
   "author": "",
   "license": "ISC",

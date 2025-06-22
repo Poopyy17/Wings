@@ -3,7 +3,7 @@ import axios from 'axios';
 import { CartItem } from '@/Cart-Context';
 
 // Base URL for API calls
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 // Types
 export interface OrderTicket {
@@ -11,11 +11,12 @@ export interface OrderTicket {
   session_id: number;
   is_takeout: boolean;
   ticket_number: string;
-  status: 'Pending' | 'Accepted' | 'Declined' | 'Completed';
+  status: 'Pending' | 'Accepted' | 'Declined' | 'Ready' | 'Completed';
   total_amount: number;
   created_at: string;
   updated_at: string;
   items?: OrderItem[];
+  tableNumber?: string;
 }
 
 export interface OrderItem {
@@ -98,7 +99,7 @@ export const getTicketDetails = async (
 // Update ticket status
 export const updateTicketStatus = async (
   ticketId: number,
-  status: 'Pending' | 'Accepted' | 'Declined' | 'Completed'
+  status: 'Pending' | 'Accepted' | 'Declined' | 'Ready' | 'Completed'
 ): Promise<ApiResponse<OrderTicket>> => {
   try {
     const response = await axios.put(
@@ -114,9 +115,9 @@ export const updateTicketStatus = async (
   }
 };
 
-export const createTakeoutOrder = async (items) => {
+export const createTakeoutOrder = async (items: any) => {
   try {
-    const mappedItems = items.map((item) => ({
+    const mappedItems = items.map((item: any) => ({
       menu_item_id: item.menu_item_id, // Keep this as menu_item_id, not convert to id
       name: item.name, // Make sure name is preserved
       price: item.price,

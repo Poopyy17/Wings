@@ -46,18 +46,10 @@ const Homepage = () => {
   }, [isTableSelectionOpen]);
   const loadTables = async () => {
     setTablesLoading(true);
-    setTablesError(null);
-    try {
+    setTablesError(null);    try {
       const response = await getAllTables();
-      // API is returning an array directly instead of {success, data, message} format
-      if (Array.isArray(response)) {
-        setTables(response);
-      } else if (response.success && response.data) {
-        // Handle the case where API might return the expected format
-        setTables(response.data);
-      } else {
-        setTablesError('Invalid response format from server');
-      }
+      // getAllTables returns Table[] directly
+      setTables(response);
     } catch (error) {
       setTablesError('Could not connect to server');
       console.error('Error loading tables:', error);

@@ -1,4 +1,41 @@
-# React + TypeScript + Vite
+# Wings Restaurant Frontend
+
+## Environment Variables
+
+### Development (.env)
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+### Production (.env.production)
+```env
+VITE_API_BASE_URL=https://your-backend-domain.vercel.app/api
+```
+
+## Deployment
+
+This frontend is built with Vite and can be deployed on:
+- Netlify (recommended for SPAs)
+- Vercel
+- Any static hosting service
+
+### For Netlify:
+1. Build command: `npm run build`
+2. Publish directory: `dist`
+3. Set environment variables in Netlify dashboard
+
+### For Vercel:
+1. Build command: `npm run build`
+2. Output directory: `dist`
+3. Set environment variables in Vercel dashboard
+
+## Build Commands
+
+- Development: `npm run dev`
+- Production build: `npm run build`
+- Preview build: `npm run preview`
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

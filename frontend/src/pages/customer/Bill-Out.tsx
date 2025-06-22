@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSession } from '@/Session-Context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -31,16 +31,15 @@ interface AdditionalItemSummary {
 
 const BillOut = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation();
   const { session } = useSession();
   const [tickets, setTickets] = useState<OrderTicket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedTickets, setExpandedTickets] = useState<
     Record<string, boolean>
   >({});
-
-  // Collect the ticket details passed from Order Summary
-  const { ticketNumber, ticketId } = location.state || {};
+  // Collect the ticket details passed from Order Summary (currently unused but may be needed for future features)
+  // const { ticketNumber, ticketId } = location.state || {};
 
   useEffect(() => {
     const fetchOrderHistory = async () => {
@@ -138,11 +137,10 @@ const BillOut = () => {
   };
   // Get all additional items across all tickets
   const additionalItems = getAllAdditionalItems();
-
   // Calculate total for regular (non-unliwings) items from accepted/completed tickets only
   const regularItemsTotal = tickets
     .filter((ticket) => ticket.status !== 'Declined') // Filter out declined tickets
-    .reduce((sum, ticket) => sum + (parseFloat(ticket.total_amount) || 0), 0);
+    .reduce((sum, ticket) => sum + (Number(ticket.total_amount) || 0), 0);
 
   const isUnliwingsService = session.serviceType === 'Unliwings';
   const unliwingsTotal = isUnliwingsService

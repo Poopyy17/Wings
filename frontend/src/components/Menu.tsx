@@ -20,7 +20,12 @@ import { toast } from 'sonner';
 import ConfirmationDialog from '@/components/Confirmation-Dialog';
 import { Utensils, Plus, Loader2, Coffee, X } from 'lucide-react';
 
-const Menu = () => {
+interface MenuProps {
+  serviceType?: string;
+  onAddToCart?: (item: any, flavors?: string[]) => void;
+}
+
+const Menu = ({ serviceType, onAddToCart }: MenuProps = {}) => {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<Record<number, MenuItem[]>>({});
   const [wingFlavors, setWingFlavors] = useState<WingFlavor[]>([]);

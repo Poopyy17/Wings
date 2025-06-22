@@ -10,7 +10,7 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
-import Menu from '@/components/layout/customer/Menu';
+import Menu from '@/components/Menu';
 
 interface CartItem {
   id: number;
